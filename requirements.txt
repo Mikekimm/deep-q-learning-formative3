@@ -1,0 +1,5 @@
+stable-baselines3[extra]>=2.0.0
+gymnasium[atari,accept-rom-license]>=0.29.0
+ale-py>=0.8.1
+autorom[accept-rom-license]
+pandas
