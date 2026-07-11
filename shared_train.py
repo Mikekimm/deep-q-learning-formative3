@@ -32,6 +32,11 @@ TOTAL_TIMESTEPS = 200_000  # same budget for every one of the 30 runs
 SEED = 42
 N_EVAL_EPISODES = 5
 
+# DQN's default buffer_size (1,000,000) needs ~56GB for stacked Atari
+# frames -- far more than Colab provides. Capped so every run actually
+# fits in memory instead of OOM-crashing partway through training.
+BUFFER_SIZE = 100_000
+
 BASELINE_CONFIG = {
     "learning_rate": 1e-4,
     "gamma": 0.99,
@@ -72,6 +77,7 @@ def train_one_run(overrides: dict, run_name: str, member: str, notes: str = ""):
         exploration_initial_eps=config["exploration_initial_eps"],
         exploration_final_eps=config["exploration_final_eps"],
         exploration_fraction=config["exploration_fraction"],
+        buffer_size=BUFFER_SIZE,
         seed=SEED,
         verbose=1,
         tensorboard_log=TB_LOG_DIR,
