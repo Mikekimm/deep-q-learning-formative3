@@ -1,4 +1,4 @@
-# DQN Atari Group Project
+# deep-q-learning-formative3
 
 Repo: https://github.com/Mikekimm/deep-q-learning-formative3
 
