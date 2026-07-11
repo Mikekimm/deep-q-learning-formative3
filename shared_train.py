@@ -14,7 +14,7 @@ from datetime import datetime
 import ale_py
 import gymnasium
 from stable_baselines3 import DQN
-from stable_baselines3.common.env_util import make_atari_env
+from stable_baselines3.common.env_util import make_atari_env, make_vec_env
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.vec_env import VecFrameStack
 
@@ -28,6 +28,7 @@ gymnasium.register_envs(ale_py)
 # them per-experiment. Only the hyperparameters under test should vary.
 # ---------------------------------------------------------------------------
 GAME_ID = "ALE/Pong-v5"
+RAM_GAME_ID = "ALE/Pong-ram-v5"  # flat 128-byte RAM observation, pairs with MlpPolicy
 TOTAL_TIMESTEPS = 200_000  # same budget for every one of the 30 runs
 SEED = 42
 N_EVAL_EPISODES = 5
@@ -107,6 +108,51 @@ def train_one_run(overrides: dict, run_name: str, member: str, notes: str = ""):
     _append_result(row)
     print(f"[{run_name}] mean_reward={mean_reward:.2f} +/- {std_reward:.2f}")
     return row
+
+
+def train_mlp_baseline(notes: str = ""):
+    """One-off MlpPolicy comparison run required by the assignment. Uses
+    the RAM observation variant of the same game (a flat 128-byte vector,
+    unlike the pixel frames CnnPolicy needs) with the same baseline
+    hyperparameters and timestep budget as the CnnPolicy runs, so the
+    comparison is fair. Not part of the 30-run hyperparameter sweep, so
+    it isn't logged to experiments_log.csv -- just returns the result."""
+    env = make_vec_env(RAM_GAME_ID, n_envs=1, seed=SEED)
+    model = DQN(
+        "MlpPolicy",
+        env,
+        learning_rate=BASELINE_CONFIG["learning_rate"],
+        gamma=BASELINE_CONFIG["gamma"],
+        batch_size=BASELINE_CONFIG["batch_size"],
+        exploration_initial_eps=BASELINE_CONFIG["exploration_initial_eps"],
+        exploration_final_eps=BASELINE_CONFIG["exploration_final_eps"],
+        exploration_fraction=BASELINE_CONFIG["exploration_fraction"],
+        buffer_size=BUFFER_SIZE,
+        seed=SEED,
+        verbose=1,
+        tensorboard_log=TB_LOG_DIR,
+    )
+    model.learn(total_timesteps=TOTAL_TIMESTEPS, tb_log_name="mlp_baseline")
+
+    os.makedirs(MODELS_DIR, exist_ok=True)
+    model_path = os.path.join(MODELS_DIR, "mlp_baseline.zip")
+    model.save(model_path)
+
+    eval_env = make_vec_env(RAM_GAME_ID, n_envs=1, seed=SEED)
+    mean_reward, std_reward = evaluate_policy(
+        model, eval_env, n_eval_episodes=N_EVAL_EPISODES, deterministic=True
+    )
+    result = {
+        "policy": "MlpPolicy",
+        "game_id": RAM_GAME_ID,
+        "total_timesteps": TOTAL_TIMESTEPS,
+        "mean_reward": round(mean_reward, 3),
+        "std_reward": round(std_reward, 3),
+        "model_path": model_path,
+        "notes": notes,
+    }
+    print(f"[mlp_baseline] mean_reward={mean_reward:.2f} +/- {std_reward:.2f}")
+    return result
 
 
 def _append_result(row: dict):
