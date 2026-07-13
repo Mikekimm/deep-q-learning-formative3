@@ -29,7 +29,6 @@ gymnasium.register_envs(ale_py)
 # them per-experiment. Only the hyperparameters under test should vary.
 # ---------------------------------------------------------------------------
 GAME_ID = "ALE/Pong-v5"
-RAM_GAME_ID = "ALE/Pong-ram-v5"  # flat 128-byte RAM observation, pairs with MlpPolicy
 TOTAL_TIMESTEPS = 200_000  # same budget for every one of the 30 runs
 SEED = 42
 N_EVAL_EPISODES = 5
@@ -127,8 +126,11 @@ def train_mlp_baseline(notes: str = ""):
     unlike the pixel frames CnnPolicy needs) with the same baseline
     hyperparameters and timestep budget as the CnnPolicy runs, so the
     comparison is fair. Not part of the 30-run hyperparameter sweep, so
-    it isn't logged to experiments_log.csv -- just returns the result."""
-    env = make_vec_env(RAM_GAME_ID, n_envs=1, seed=SEED)
+    it isn't logged to experiments_log.csv -- just returns the result.
+
+    Newer ale-py versions don't register a separate "-ram-" environment
+    id -- RAM observations come from the same id via obs_type="ram"."""
+    env = make_vec_env(GAME_ID, n_envs=1, seed=SEED, env_kwargs={"obs_type": "ram"})
     model = DQN(
         "MlpPolicy",
         env,
@@ -149,13 +151,13 @@ def train_mlp_baseline(notes: str = ""):
     model_path = os.path.join(MODELS_DIR, "mlp_baseline.zip")
     model.save(model_path)
 
-    eval_env = make_vec_env(RAM_GAME_ID, n_envs=1, seed=SEED)
+    eval_env = make_vec_env(GAME_ID, n_envs=1, seed=SEED, env_kwargs={"obs_type": "ram"})
     mean_reward, std_reward = evaluate_policy(
         model, eval_env, n_eval_episodes=N_EVAL_EPISODES, deterministic=True
     )
     result = {
         "policy": "MlpPolicy",
-        "game_id": RAM_GAME_ID,
+        "game_id": f"{GAME_ID} (obs_type=ram)",
         "total_timesteps": TOTAL_TIMESTEPS,
         "mean_reward": round(mean_reward, 3),
         "std_reward": round(std_reward, 3),

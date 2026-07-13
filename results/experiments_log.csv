@@ -9,3 +9,4 @@ memberA_lr_07,MemberA,2026-07-13T13:14:28,0.0001,0.99,32,1.0,0.05,0.1,200000,-17
 memberA_lr_08,MemberA,2026-07-13T13:31:22,7e-05,0.99,32,1.0,0.05,0.1,200000,-18.0,1.789,results/models/memberA_lr_08.zip,
 memberA_lr_09,MemberA,2026-07-13T13:48:14,5e-05,0.99,32,1.0,0.05,0.1,200000,-17.2,3.25,results/models/memberA_lr_09.zip,
 memberA_lr_10,MemberA,2026-07-13T14:04:49,1e-05,0.99,32,1.0,0.05,0.1,200000,-20.6,0.49,results/models/memberA_lr_10.zip,
+policy_comparison_cnn,comparison,2026-07-13T18:50:47,0.0001,0.99,32,1.0,0.05,0.1,200000,-17.4,2.059,results/models/policy_comparison_cnn.zip,MlpPolicy vs CnnPolicy comparison -- CNN side

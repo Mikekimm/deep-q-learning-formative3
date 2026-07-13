@@ -77,16 +77,78 @@ git push origin main
        --exploration_fraction <val>
    ```
    This produces `dqn_model.zip` in the repo root.
-4. Watch it play:
+4. Watch it play (run locally, not in Colab -- Colab's headless and can't
+   open a real display):
    ```
    python play.py --model dqn_model.zip --episodes 5
    ```
-   Needs a real display, so it won't work in Colab (headless) -- run it
-   locally instead.
+5. **Screen-record step 4** -- the submission requires a video of
+   `play.py` actually running with the agent playing. Save it and either
+   embed it below or link it (e.g. upload to the repo if small enough,
+   or link a Drive/YouTube unlisted upload).
 
-## Report
+We don't need a separate report doc for this one -- the table, the
+discussion, and the video all just go straight into this README.
 
-Each of us writes the "why" for our own axis's results; we combine
-these into one report with a shared intro/conclusion, the pooled
-30-row hyperparameter table, and a contributions section (who ran which
-experiment IDs, who wrote what).
+## Hyperparameter Results
+
+A's `learning_rate` sweep is done, filled in below. B and C's rows are
+still TODO until their sweeps finish.
+
+| Member | Hyperparameter Set | Noted Behavior |
+|---|---|---|
+| A | lr=0.01, gamma=0.99, batch=32, eps_start=1.0, eps_end=0.05, eps_decay=0.1 | Reward pinned at -21.0 the whole run, zero variance across eval episodes -- learning rate too high, updates never stabilized. |
+| A | lr=0.005, gamma=0.99, batch=32, eps_start=1.0, eps_end=0.05, eps_decay=0.1 | Same as above -- flat -21.0, no learning. Still too high. |
+| A | lr=0.001, gamma=0.99, batch=32, eps_start=1.0, eps_end=0.05, eps_decay=0.1 | Still flat -21.0. Even an order of magnitude down from the top value, learning rate is still too high for this to converge in 200k steps. |
+| A | lr=0.0007, gamma=0.99, batch=32, eps_start=1.0, eps_end=0.05, eps_decay=0.1 | Flat -21.0 again -- no sign of the pattern breaking yet. |
+| A | lr=0.0005, gamma=0.99, batch=32, eps_start=1.0, eps_end=0.05, eps_decay=0.1 | Same flat -21.0 result. |
+| A | lr=0.0003, gamma=0.99, batch=32, eps_start=1.0, eps_end=0.05, eps_decay=0.1 | Last of the flat -21.0 runs -- everything above ~1e-4 failed to learn at all in our budget. |
+| A | lr=0.0001, gamma=0.99, batch=32, eps_start=1.0, eps_end=0.05, eps_decay=0.1 | First real break from -21: reward -17.8 +/- 2.14. Non-zero variance means the agent's actually behaving differently across episodes now, not stuck in one degenerate policy. This is our baseline lr. |
+| A | lr=7e-05, gamma=0.99, batch=32, eps_start=1.0, eps_end=0.05, eps_decay=0.1 | Similar to the run above: -18.0 +/- 1.79. Confirms the 5e-5 to 1e-4 range is roughly where this converges within 200k steps. |
+| A | lr=5e-05, gamma=0.99, batch=32, eps_start=1.0, eps_end=0.05, eps_decay=0.1 | Best result of the sweep: -17.2 +/- 3.25. Highest reward and highest variance -- looks like the most active learning of any run. |
+| A | lr=1e-05, gamma=0.99, batch=32, eps_start=1.0, eps_end=0.05, eps_decay=0.1 | Reward dropped back to -20.6 +/- 0.49. Learning rate this low is probably too slow to make much progress in only 200k steps. |
+| B | *(TODO)* | *(TODO)* |
+| C | *(TODO)* | *(TODO)* |
+
+Overall pattern for `learning_rate`: anything from 0.01 down to 0.0003
+failed to learn at all (flat -21.0, no variance). Real learning only
+showed up once lr dropped to the 5e-5 to 1e-4 range, peaking around
+5e-05. Going lower still (1e-05) started losing ground again -- too
+slow to converge in the timestep budget we gave it. Classic too-high
+(unstable) vs too-low (too slow) tradeoff.
+
+### MlpPolicy vs CnnPolicy comparison
+
+Same baseline hyperparameters (lr=0.0001, gamma=0.99, batch=32),
+200,000 steps, only the policy/observation type differs:
+
+| Policy | Observation | mean_reward |
+|---|---|---|
+| CnnPolicy | pixel frames (84x84, 4-stacked) | -17.40 +/- 2.06 |
+| MlpPolicy | RAM vector (128,) | -21.00 +/- 0.00 |
+
+CnnPolicy clearly wins here. MlpPolicy never broke away from -21 at
+all (zero variance, same as our worst learning-rate runs) despite
+running the exact config that worked well for CnnPolicy. Makes sense
+given what the two are working with -- pixel frames have spatial
+structure (ball position, paddle position, motion) that convolutions
+are built to pick up on, while raw RAM bytes are just unstructured
+memory values with no spatial relationship between neighboring
+numbers. A plain MLP has a much harder time pulling anything useful
+out of that in the same training budget.
+
+## Discussion of Hyperparameter Tuning Results
+
+*(TODO once the table above is filled in -- write up the patterns we
+saw and why, not just what happened. Which axis moved the needle most?
+Any surprises?)*
+
+## Demo Video
+
+*(TODO -- link or embed the `play.py` recording here once the final
+model is trained.)*
+
+## Contributions
+
+*(TODO -- who ran which experiment IDs on which axis, who wrote which
+part of this README.)*
