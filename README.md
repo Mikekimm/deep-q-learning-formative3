@@ -1,58 +1,76 @@
 # deep-q-learning-formative3
 
-Repo: https://github.com/Mikekimm/deep-q-learning-formative3
+Our group's DQN Atari assignment -- training a DQN agent (Stable
+Baselines3 + Gymnasium) to play Pong, running 30 hyperparameter
+experiments (10 each), and evaluating the best model with `play.py`.
 
-3-person group assignment: train a DQN agent (Stable Baselines3 + Gymnasium)
-on an Atari game, run 10 hyperparameter experiments per member (30 total),
-and evaluate the best model with `play.py`.
+## Who's doing what
 
-## Role split
+Each of us owns one hyperparameter axis and holds everything else at
+the shared baseline. That way our 30 results are actually comparable --
+no confounded variables -- and the "noted behavior" write-up is an
+explanation, not a guess.
 
-Each member owns one hyperparameter axis, holds everything else at the
-shared baseline, and runs 10 experiments varying only their axis. This
-keeps results comparable (no confounded variables) and makes the
-"noted behavior" write-up a causal explanation instead of a guess.
-
-| Member | Axis under test | Notebook |
+| Member | Axis | Notebook |
 |---|---|---|
 | A | `learning_rate` (10 values) | `notebooks/experiments_memberA_lr.ipynb` |
 | B | `gamma` + `batch_size` (5 + 5) | `notebooks/experiments_memberB_gamma_batch.ipynb` |
 | C | exploration params (`exploration_initial_eps`, `exploration_final_eps`, `exploration_fraction`, 10 combos) | `notebooks/experiments_memberC_epsilon.ipynb` |
 
-## Locked decisions
+Also on us: a one-off MlpPolicy vs CnnPolicy comparison the assignment
+requires (`notebooks/policy_comparison_mlp_vs_cnn.ipynb`) -- not part of
+anyone's 10, whoever picks it up just runs it once.
 
-Do not change these mid-experiment -- see `GAME_ID`, `TOTAL_TIMESTEPS`,
-`SEED`, `BASELINE_CONFIG` in `shared_train.py`. If a run's config differs
-in more than the assigned axis, it can't be fairly compared to the others.
+## What we locked in
+
+We agreed on these up front so our 30 runs stay comparable -- don't
+change them mid-sweep without checking with the group first (actual
+values live in `shared_train.py`):
 
 - **Game:** `ALE/Pong-v5`
-- **Timesteps per run:** 200,000 (same for all 30 runs)
+- **Timesteps per run:** 200,000, same for every run
 - **Seed:** 42
-- **Baseline config:** see `BASELINE_CONFIG` in `shared_train.py`
+- **Baseline hyperparameters:** `BASELINE_CONFIG` in `shared_train.py`
 
-If your compute is too slow for 200k steps x 10 runs, raise it with the
-group before changing the number solo -- it has to stay identical across
-everyone's runs.
+If your Colab is too slow for 200k steps x 10 runs, flag it to the
+group rather than quietly changing the number -- it has to stay
+identical across everyone's runs or the comparison breaks.
 
-## How to run your experiments (Colab)
+## Running your experiments (Colab)
 
-1. Open your notebook.
-2. Upload `shared_train.py` to the Colab session (or `git clone` this repo
-   and `%cd` into it) so the import works.
-3. Run the install cell, then run your experiment loop.
-4. Each run automatically:
-   - saves a model to `results/models/<run_name>.zip`
-   - appends a row to `results/experiments_log.csv`
-5. After each run, jot down what you observed (reward trend, stability,
-   divergence, etc.) -- you'll need this for the report's "noted behavior"
-   column.
+1. Open your notebook fresh from GitHub each session (not a cached tab)
+   -- File → Open notebook → GitHub.
+2. **Enable a GPU runtime**: Runtime → Change runtime type → T4 GPU.
+   Massively faster than CPU, worth doing before you start.
+3. Run the install cell, then the repo cell -- it clones fresh or resets
+   to match GitHub exactly, so you're always on the latest code.
+4. Run the smoke test cell by itself first -- confirms your session's
+   actually working before committing hours to the real sweep. Don't
+   Run All the whole notebook.
+5. Run your real experiment loop. Each run automatically saves a model
+   to `results/models/<run_name>.zip` and appends a row to
+   `results/experiments_log.csv`.
+6. After each run, jot down what we saw -- reward trend, stability,
+   divergence -- we need this for the report's "noted behavior" column.
+7. Optional: the live TensorBoard cell shows reward curves updating in
+   real time while a run trains, if you'd rather watch than wait.
 
-## After all 30 runs are in
+## Syncing results back
 
-1. Pool `results/experiments_log.csv` from all three notebooks into one
-   file (same schema, so this is just concatenating rows).
+We're all appending to the same `results/experiments_log.csv`, so pull
+before you push or we'll clobber each other's rows:
+```
+git add results/experiments_log.csv
+git commit -m "Add <name> <axis> results"
+git pull --no-rebase origin main
+git push origin main
+```
+
+## Once all 30 runs (+ the MLP/CNN comparison) are in
+
+1. Check `results/experiments_log.csv` has everyone's rows.
 2. Pick the config with the best `mean_reward`.
-3. Retrain it as the official submission artifact:
+3. Retrain it as our official submission artifact:
    ```
    python train.py --learning_rate <val> --gamma <val> --batch_size <val> \
        --exploration_initial_eps <val> --exploration_final_eps <val> \
@@ -63,10 +81,12 @@ everyone's runs.
    ```
    python play.py --model dqn_model.zip --episodes 5
    ```
+   Needs a real display, so it won't work in Colab (headless) -- run it
+   locally instead.
 
 ## Report
 
-Each member writes the "why" for their axis's results; combine into one
-report with a shared intro/conclusion, the pooled 30-row hyperparameter
-table, and an individual-contributions section (who ran experiment IDs
-1-10 on which axis, who wrote which section).
+Each of us writes the "why" for our own axis's results; we combine
+these into one report with a shared intro/conclusion, the pooled
+30-row hyperparameter table, and a contributions section (who ran which
+experiment IDs, who wrote what).
