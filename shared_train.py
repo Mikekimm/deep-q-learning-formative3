@@ -8,6 +8,7 @@ runs -- everything else comes from BASELINE_CONFIG.
 """
 
 import csv
+import gc
 import os
 from datetime import datetime
 
@@ -107,6 +108,16 @@ def train_one_run(overrides: dict, run_name: str, member: str, notes: str = ""):
     }
     _append_result(row)
     print(f"[{run_name}] mean_reward={mean_reward:.2f} +/- {std_reward:.2f}")
+
+    # Free the replay buffer (~5.6GB per run) and env before returning --
+    # without this, repeated calls in a sweep loop accumulate memory across
+    # runs instead of releasing it, eventually causing severe swap-induced
+    # slowdowns or an OOM crash partway through a 10-run sweep.
+    env.close()
+    eval_env.close()
+    del model, env, eval_env
+    gc.collect()
+
     return row
 
 
@@ -152,6 +163,12 @@ def train_mlp_baseline(notes: str = ""):
         "notes": notes,
     }
     print(f"[mlp_baseline] mean_reward={mean_reward:.2f} +/- {std_reward:.2f}")
+
+    env.close()
+    eval_env.close()
+    del model, env, eval_env
+    gc.collect()
+
     return result
 
 
