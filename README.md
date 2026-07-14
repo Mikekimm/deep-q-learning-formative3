@@ -144,6 +144,9 @@ Demo Video
 model is trained.)
 
 Contributions
+## Contributions
 
-(TODO -- who ran which experiment IDs on which axis, who wrote which
-part of this README.)
+- Member A: ran the learning_rate sweep (10 runs, IDs memberA_lr_01 to memberA_lr_10), wrote the corresponding results table rows and pattern summary. Also ran the MlpPolicy vs CnnPolicy comparison and wrote that section.
+- Member C: ran the exploration params (epsilon) sweep (10 runs, IDs memberC_eps_01 to memberC_eps_10), wrote the corresponding results table rows and pattern summary, pushed the executed notebook to notebooks/executed/.
+- Member B: (TODO once B's sweep is done)
+ 
