@@ -177,6 +177,20 @@ def train_mlp_baseline(notes: str = ""):
 def _append_result(row: dict):
     os.makedirs(os.path.dirname(RESULTS_CSV), exist_ok=True)
     file_exists = os.path.isfile(RESULTS_CSV)
+
+    # If the file already exists but doesn't end with a newline (can happen
+    # depending on how it was last written/merged), appending in "a" mode
+    # would glue our new row onto the end of the last existing line instead
+    # of starting a fresh one. Fix that up front so every appended row
+    # actually starts on its own line.
+    if file_exists and os.path.getsize(RESULTS_CSV) > 0:
+        with open(RESULTS_CSV, "rb") as f:
+            f.seek(-1, os.SEEK_END)
+            needs_newline = f.read(1) != b"\n"
+        if needs_newline:
+            with open(RESULTS_CSV, "a", newline="") as f:
+                f.write("\n")
+
     with open(RESULTS_CSV, "a", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=list(row.keys()))
         if not file_exists:
