@@ -2,14 +2,14 @@
 
 Repo: https://github.com/Mikekimm/deep-q-learning-formative3
 
-Our group's DQN Atari assignment -- training a DQN agent (Stable
-Baselines3 + Gymnasium) to play Pong, running 30 hyperparameter
-experiments (10 each), and evaluating the best model with `play.py`.
+Our group's DQN Atari assignment -- we trained a DQN agent (Stable
+Baselines3 + Gymnasium) to play Pong, ran 30 hyperparameter experiments
+(10 each), and evaluated the best model with `play.py`.
 
-## Who's doing what
+## Who did what
 
-Each of us owns one hyperparameter axis and holds everything else at
-the shared baseline. That way our 30 results are actually comparable --
+Each of us owned one hyperparameter axis and held everything else at
+the shared baseline. That way our 30 results were actually comparable --
 no confounded variables -- and the "noted behavior" write-up is an
 explanation, not a guess.
 
@@ -19,48 +19,48 @@ explanation, not a guess.
 | B | `gamma` + `batch_size` (5 + 5) | `notebooks/experiments_memberB_gamma_batch.ipynb` |
 | C | exploration params (`exploration_initial_eps`, `exploration_final_eps`, `exploration_fraction`, 10 combos) | `notebooks/experiments_memberC_epsilon.ipynb` |
 
-Also on us: a one-off MlpPolicy vs CnnPolicy comparison the assignment
-requires (`notebooks/policy_comparison_mlp_vs_cnn.ipynb`) -- not part of
-anyone's 10, whoever picks it up just runs it once.
+We also ran a one-off MlpPolicy vs CnnPolicy comparison the assignment
+required (`notebooks/policy_comparison_mlp_vs_cnn.ipynb`) -- not part of
+anyone's 10.
 
 ## What we locked in
 
-We agreed on these up front so our 30 runs stay comparable -- don't
-change them mid-sweep without checking with the group first (actual
-values live in `shared_train.py`):
+We agreed on these up front so our 30 runs would stay comparable --
+nobody changed them mid-sweep without checking with the group first
+(actual values live in `shared_train.py`):
 
 - **Game:** `ALE/Pong-v5`
 - **Timesteps per run:** 200,000, same for every run
 - **Seed:** 42
 - **Baseline hyperparameters:** `BASELINE_CONFIG` in `shared_train.py`
 
-If your Colab is too slow for 200k steps x 10 runs, flag it to the
-group rather than quietly changing the number -- it has to stay
-identical across everyone's runs or the comparison breaks.
+We'd agreed that if anyone's Colab was too slow for the full 200k
+steps x 10 runs, they'd flag it to the group rather than quietly
+changing the number -- it had to stay identical across everyone's runs
+or the comparison would break.
 
-## Running your experiments (Colab)
+## How we ran our experiments (Colab)
 
-1. Open your notebook fresh from GitHub each session (not a cached tab)
-   -- File → Open notebook → GitHub.
-2. **Enable a GPU runtime**: Runtime → Change runtime type → T4 GPU.
-   Massively faster than CPU, worth doing before you start.
-3. Run the install cell, then the repo cell -- it clones fresh or resets
-   to match GitHub exactly, so you're always on the latest code.
-4. Run the smoke test cell by itself first -- confirms your session's
-   actually working before committing hours to the real sweep. Don't
-   Run All the whole notebook.
-5. Run your real experiment loop. Each run automatically saves a model
-   to `results/models/<run_name>.zip` and appends a row to
-   `results/experiments_log.csv`.
-6. After each run, jot down what we saw -- reward trend, stability,
-   divergence -- we need this for the report's "noted behavior" column.
-7. Optional: the live TensorBoard cell shows reward curves updating in
-   real time while a run trains, if you'd rather watch than wait.
+Each of us opened our notebook fresh from GitHub every session (never
+a cached tab) via File → Open notebook → GitHub, and enabled a GPU
+runtime (Runtime → Change runtime type → T4 GPU) since it was
+massively faster than CPU. After the install cell and the repo cell
+(which cloned fresh or reset to match GitHub exactly, so we were
+always on the latest code), we ran a smoke test cell by itself first
+to confirm the session was actually working before committing hours
+to a real sweep -- never Run All on the whole notebook. Then we ran
+the real experiment loop; each run automatically saved a model to
+`results/models/<run_name>.zip` and appended a row to
+`results/experiments_log.csv`. After each run, we jotted down what we
+saw -- reward trend, stability, divergence -- for the "noted behavior"
+column. A live TensorBoard cell let us watch reward curves update in
+real time while a run trained, for whoever preferred watching over
+waiting.
 
 ## Syncing results back
 
-We're all appending to the same `results/experiments_log.csv`, so pull
-before you push or we'll clobber each other's rows:
+We were all appending to the same `results/experiments_log.csv`, so we
+pulled before pushing to avoid clobbering each other's rows:
 ```
 git add results/experiments_log.csv
 git commit -m "Add <name> <axis> results"
@@ -68,29 +68,28 @@ git pull --no-rebase origin main
 git push origin main
 ```
 
-## Once all 30 runs (+ the MLP/CNN comparison) are in
+## Once all 30 runs (+ the MLP/CNN comparison) were in
 
-1. Check `results/experiments_log.csv` has everyone's rows.
-2. Pick the config with the best `mean_reward`.
-3. Retrain it as our official submission artifact:
+1. We checked `results/experiments_log.csv` had everyone's rows.
+2. We picked the config with the best `mean_reward` -- gamma=0.95
+   (Member B's sweep), which beat every other config across all 30 runs.
+3. Retrained it as our official submission artifact:
    ```
-   python train.py --learning_rate <val> --gamma <val> --batch_size <val> \
-       --exploration_initial_eps <val> --exploration_final_eps <val> \
-       --exploration_fraction <val>
+   python train.py --learning_rate 0.0001 --gamma 0.95 --batch_size 32 \
+       --exploration_initial_eps 1.0 --exploration_final_eps 0.05 \
+       --exploration_fraction 0.1
    ```
-   This produces `dqn_model.zip` in the repo root.
-4. Watch it play (run locally, not in Colab -- Colab's headless and can't
-   open a real display):
+   This produced `dqn_model.zip` in the repo root.
+4. Watched it play (run locally, not Colab -- Colab's headless and
+   can't open a real display):
    ```
    python play.py --model dqn_model.zip --episodes 5
    ```
-5. **Screen-record step 4** -- the submission requires a video of
-   `play.py` actually running with the agent playing. Save it and either
-   embed it below or link it (e.g. upload to the repo if small enough,
-   or link a Drive/YouTube unlisted upload).
+5. Screen-recorded that run -- the submission requires a video of
+   `play.py` actually running with the agent playing.
 
-We don't need a separate report doc for this one -- the table, the
-discussion, and the video all just go straight into this README.
+We didn't need a separate report doc for this one -- the table, the
+discussion, and the video all went straight into this README.
 
 ## Hyperparameter Results
 
@@ -210,8 +209,17 @@ whole sweep.
 
 ## Demo Video
 
-*(TODO -- link or embed the `play.py` recording here once the final
-model is trained.)*
+We ran `play.py` locally with our final trained model (`dqn_model.zip`,
+gamma=0.95) and screen-recorded it -- 5 episodes, orange paddle is our
+agent, green is Pong's built-in opponent.
+
+<video src="demo_video.mp4" controls width="600"></video>
+
+(If the video doesn't render inline, it's also available directly at
+[`demo_video.mp4`](demo_video.mp4) in the repo root.)
+
+(If the video doesn't play inline, it's also downloadable directly at
+[`demo_video.mp4`](demo_video.mp4) in the repo root.)
 
 ## Contributions
 
