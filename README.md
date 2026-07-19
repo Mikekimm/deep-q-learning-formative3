@@ -94,8 +94,7 @@ discussion, and the video all just go straight into this README.
 
 ## Hyperparameter Results
 
-A's `learning_rate` sweep and C's exploration sweep are done, filled in
-below. B's rows are still TODO until their sweep finishes.
+All 30 experiments are done -- filled in below.
 
 | Member | Hyperparameter Set | Noted Behavior |
 |---|---|---|
@@ -109,7 +108,16 @@ below. B's rows are still TODO until their sweep finishes.
 | A | lr=7e-05, gamma=0.99, batch=32, eps_start=1.0, eps_end=0.05, eps_decay=0.1 | Similar to the run above: -18.0 +/- 1.79. Confirms the 5e-5 to 1e-4 range is roughly where this converges within 200k steps. |
 | A | lr=5e-05, gamma=0.99, batch=32, eps_start=1.0, eps_end=0.05, eps_decay=0.1 | Best result of the sweep: -17.2 +/- 3.25. Highest reward and highest variance -- looks like the most active learning of any run. |
 | A | lr=1e-05, gamma=0.99, batch=32, eps_start=1.0, eps_end=0.05, eps_decay=0.1 | Reward dropped back to -20.6 +/- 0.49. Learning rate this low is probably too slow to make much progress in only 200k steps. |
-| B | *(TODO)* | *(TODO)* |
+| B | lr=0.0001, gamma=0.999, batch=32, eps_start=1.0, eps_end=0.05, eps_decay=0.1 | Reward -18.0 +/- 2.37. Discount factor this close to 1 weighs distant future rewards almost as much as immediate ones -- harder credit assignment over that long a horizon, landing below baseline. |
+| B | lr=0.0001, gamma=0.99, batch=32, eps_start=1.0, eps_end=0.05, eps_decay=0.1 | Reward -17.8 +/- 2.14. This is the shared baseline config -- our reference point for the rest of the gamma sweep. |
+| B | lr=0.0001, gamma=0.98, batch=32, eps_start=1.0, eps_end=0.05, eps_decay=0.1 | Reward -18.4 +/- 2.06. Slightly below baseline -- a small step down from 0.99 didn't help, if anything it shortened the effective planning horizon a bit too much. |
+| B | lr=0.0001, gamma=0.95, batch=32, eps_start=1.0, eps_end=0.05, eps_decay=0.1 | Reward -15.4 +/- 2.42. Best result of the entire 30-experiment sweep. A shorter effective horizon than baseline seems to make credit assignment easier in Pong -- reward arrives within a few hundred steps of the action that caused it, so discounting more aggressively doesn't lose much signal while making learning more stable. |
+| B | lr=0.0001, gamma=0.90, batch=32, eps_start=1.0, eps_end=0.05, eps_decay=0.1 | Reward -17.8 +/- 1.17. Pushing the discount factor down further stopped helping -- back to baseline-level reward, though with noticeably lower variance than any other gamma value we tried. |
+| B | lr=0.0001, gamma=0.99, batch=8, eps_start=1.0, eps_end=0.05, eps_decay=0.1 | Reward -20.6 +/- 0.49. Worst result of our sweep. A batch this small gives very noisy gradient estimates each update -- barely better than a flat -21 run, though the low variance suggests it's consistently bad rather than occasionally getting lucky. |
+| B | lr=0.0001, gamma=0.99, batch=16, eps_start=1.0, eps_end=0.05, eps_decay=0.1 | Reward -18.2 +/- 1.33. Doubling the batch size from the row above helps noticeably -- less noisy gradients start showing up in the reward. |
+| B | lr=0.0001, gamma=0.99, batch=32, eps_start=1.0, eps_end=0.05, eps_decay=0.1 | Reward -17.8 +/- 2.14. Shared baseline batch size -- matches the gamma sweep's baseline row exactly, as expected since it's the identical config. |
+| B | lr=0.0001, gamma=0.99, batch=64, eps_start=1.0, eps_end=0.05, eps_decay=0.1 | Reward -17.4 +/- 1.63. Slightly better than baseline -- larger batches keep smoothing out the gradient noise. |
+| B | lr=0.0001, gamma=0.99, batch=128, eps_start=1.0, eps_end=0.05, eps_decay=0.1 | Reward -16.4 +/- 1.63. Best of the batch_size sweep. Larger batches consistently helped throughout this axis -- more stable gradient estimates per update seem to matter more than the extra compute per step. |
 | C | eps_start=1.0, eps_end=0.20, eps_decay=0.05 | Reward -17.2 +/- 1.17. Keeping a relatively high floor on epsilon (20%) means the agent never really commits to exploiting what it's learned -- one-fifth of actions stay random for the rest of training after only 5% of the run. Still learns something, but that much permanent randomness caps how consistent it gets. |
 | C | eps_start=1.0, eps_end=0.10, eps_decay=0.05 | Reward -16.2 +/- 1.60. Best result of the sweep. Same fast 5%-of-training decay as the row above, but a lower floor afterward -- looks like the sweet spot between exploring early and actually exploiting later. |
 | C | eps_start=1.0, eps_end=0.05, eps_decay=0.05 | Reward -18.0 +/- 1.67. Baseline eps_end but decaying five times faster than baseline. Locking into a near-greedy policy this early (only 10k of 200k steps) seems to hurt -- the agent hasn't explored enough of the state space yet before it stops exploring. |
@@ -127,6 +135,18 @@ showed up once lr dropped to the 5e-5 to 1e-4 range, peaking around
 5e-05. Going lower still (1e-05) started losing ground again -- too
 slow to converge in the timestep budget we gave it. Classic too-high
 (unstable) vs too-low (too slow) tradeoff.
+
+Overall pattern for `gamma`: shorter effective horizons (0.90-0.95)
+outperformed both the baseline and values closer to 1 (0.98-0.999) --
+gamma=0.95 gave the single best result of the whole 30-experiment
+sweep. Pong's reward arrives quickly relative to the actions that
+cause it, so discounting more aggressively doesn't lose much useful
+signal while apparently making the value estimates easier to learn.
+
+Overall pattern for `batch_size`: reward increased almost monotonically
+from batch=8 up through batch=128 -- bigger batches gave less noisy
+gradient estimates and better results across the board, with no sign
+of diminishing returns yet at the largest size we tested.
 
 Overall pattern for exploration params: decay speed mattered more than
 where epsilon actually ended up. The 10-20%-of-training decay window
@@ -158,9 +178,35 @@ out of that in the same training budget.
 
 ## Discussion of Hyperparameter Tuning Results
 
-*(TODO once B's sweep is in -- write up the cross-axis patterns and
-why, not just what happened. Which axis moved the needle most? Any
-surprises?)*
+Across all three axes, `gamma` had the single biggest impact on final
+performance -- gamma=0.95 produced the best result of any of the 30
+experiments (-15.4), beating the best `learning_rate` result (-17.2)
+and the best `epsilon` configs (-16.2). But `learning_rate` had the
+most dramatic effect in a different sense: it was the only axis where
+results were essentially binary. Either the agent learned nothing at
+all (flat -21.0, six of the ten runs) or it learned something real
+(-17 to -18 range) -- there was no middle ground. `gamma` and
+`epsilon`, by contrast, never produced a complete failure; every
+config on those two axes learned at least something, and the
+differences between configs were about degree, not kind.
+
+The exploration-exploitation tradeoff showed up most clearly in the
+epsilon sweep: decay speed (how much of training passed before
+settling into the final epsilon) mattered more than where epsilon
+actually ended up. Too fast a decay (5% of training) locked the agent
+into greedy behavior before it had explored enough of the state space;
+too slow (50%) left too little time to actually exploit what it had
+learned. The final epsilon floor itself barely moved the needle, which
+surprised us going in.
+
+Biggest surprise overall: shorter discount horizons (gamma=0.90-0.95)
+consistently beat both the baseline (0.99) and values closer to 1
+(0.98-0.999). We expected valuing future rewards more (higher gamma)
+to help a game like Pong, but Pong's reward signal arrives quickly
+relative to the actions that cause it, so discounting more aggressively
+didn't lose much useful signal while apparently making the value
+function easier to learn -- and gave us the best single result of the
+whole sweep.
 
 ## Demo Video
 
@@ -171,4 +217,4 @@ model is trained.)*
 
 - Member A: ran the learning_rate sweep (10 runs, IDs memberA_lr_01 to memberA_lr_10), wrote the corresponding results table rows and pattern summary. Also ran the MlpPolicy vs CnnPolicy comparison and wrote that section.
 - Member C: ran the exploration params (epsilon) sweep (10 runs, IDs memberC_eps_01 to memberC_eps_10), wrote the corresponding results table rows and pattern summary, pushed the executed notebook to notebooks/executed/.
-- Member B: *(TODO once B's sweep is done)*
+- Member B: gamma + batch_size sweep (10 runs, IDs memberB_gamma_01 to memberB_gamma_05 and memberB_batch_01 to memberB_batch_05). Member A reran this sweep to completion after the original attempt didn't finish, and wrote the corresponding results table rows and pattern summary.
