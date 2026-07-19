@@ -6,6 +6,14 @@ Our group's DQN Atari assignment -- we trained a DQN agent (Stable
 Baselines3 + Gymnasium) to play Pong, ran 30 hyperparameter experiments
 (10 each), and evaluated the best model with `play.py`.
 
+## Demo Video
+
+We ran `play.py` locally with our final trained model (`dqn_model.zip`,
+gamma=0.95) and screen-recorded it -- 5 episodes, orange paddle is our
+agent, green is Pong's built-in opponent.
+
+https://github.com/user-attachments/assets/fb6321b8-ffb2-4495-894a-3e38ed54d46f
+
 ## Who did what
 
 Each of us owned one hyperparameter axis and held everything else at
@@ -206,20 +214,6 @@ relative to the actions that cause it, so discounting more aggressively
 didn't lose much useful signal while apparently making the value
 function easier to learn -- and gave us the best single result of the
 whole sweep.
-
-## Demo Video
-
-We ran `play.py` locally with our final trained model (`dqn_model.zip`,
-gamma=0.95) and screen-recorded it -- 5 episodes, orange paddle is our
-agent, green is Pong's built-in opponent.
-
-<video src="demo_video.mp4" controls width="600"></video>
-
-(If the video doesn't render inline, it's also available directly at
-[`demo_video.mp4`](demo_video.mp4) in the repo root.)
-
-(If the video doesn't play inline, it's also downloadable directly at
-[`demo_video.mp4`](demo_video.mp4) in the repo root.)
 
 ## Contributions
 
