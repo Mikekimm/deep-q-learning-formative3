@@ -4,5 +4,4 @@ __pycache__/
 .ipynb_checkpoints/
 results/models/
 results/tb_logs/
-dqn_model.zip
 .DS_Store
